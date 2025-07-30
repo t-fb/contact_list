@@ -28,7 +28,7 @@ function App() {
 
   async function fetchAllContacts() {
     try {
-      let response = await axios.get("http://localhost:3001/api/contacts");
+      let response = await axios.get("/api/contacts");
       setContacts(response.data);
     } catch (error) {
       console.error("Could not retrieve contacts.");
@@ -39,10 +39,7 @@ function App() {
     event.preventDefault();
     try {
       let newContact = { name: newName, phone: newPhone };
-      const response = await axios.post(
-        "http://localhost:3001/api/contacts",
-        newContact
-      );
+      const response = await axios.post("/api/contacts", newContact);
       newContact = response.data;
       setContacts((prev) => prev.concat(newContact));
 
@@ -55,7 +52,7 @@ function App() {
 
   async function deleteContact(id) {
     try {
-      await axios.delete(`http://localhost:3001/api/contacts/${id}`);
+      await axios.delete(`/api/contacts/${id}`);
       setContacts((prev) => prev.filter((contact) => contact.id !== id));
     } catch (error) {
       console.error("Could not delete contact.");
