@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 import pg from "pg";
 
 dotenv.config();
@@ -16,6 +17,67 @@ const pool = new pg.Pool({
   port: process.env.PGPORT,
 });
 
+// Connect to MongdoDB
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  });
+
+// define colour schema
+const colourSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+});
+const Colour = mongoose.model("Colour", colourSchema);
+
+// colours routes +++++++
+// Get all colours
+app.get("/api/colours", async (req, res) => {
+  try {
+    const colours = await Colour.find({});
+    res.json(colours);
+  } catch (err) {
+    console.error("Error fetching colours:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Add a new colour
+app.post("/api/colours", async (req, res) => {
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: "Colour name required" });
+  }
+
+  try {
+    const newColour = new Colour({ name });
+    const savedColour = await newColour.save();
+    res.status(201).json(savedColour);
+  } catch (err) {
+    console.error("Error adding colour:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Delete a colour by ID
+app.delete("/api/colours/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const deleted = await Colour.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ error: "Colour not found" });
+    res.json({ message: "Colour deleted" });
+  } catch (err) {
+    console.error("Error deleting colour:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// contacts routes ++++++++++++++
 // Add a new contact
 app.post("/api/contacts", async (req, res) => {
   const { name, phone } = req.body;

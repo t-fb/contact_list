@@ -2,14 +2,29 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
 
-const ContactsList = (props) => {
-  return props.contacts.map((contact) => (
+const ContactsList = ({ contacts, deleteContact }) => {
+  return contacts.map((contact) => (
     <li key={contact.id}>
       {contact.name} - ({contact.phone})
       <button
         type="button"
         className="delete-btn"
-        onClick={() => props.deleteContact(contact.id)}
+        onClick={() => deleteContact(contact.id)}
+      >
+        Delete
+      </button>
+    </li>
+  ));
+};
+
+const ColourList = ({ colours, deleteColour }) => {
+  return colours.map((colour) => (
+    <li key={colour._id}>
+      {colour.name}
+      <button
+        type="button"
+        className="delete-btn"
+        onClick={() => deleteColour(colour._id)}
       >
         Delete
       </button>
@@ -22,8 +37,11 @@ function App() {
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
 
+  const [colours, setColours] = useState([]);
+  const [newColour, setNewColour] = useState("");
   useEffect(() => {
     fetchAllContacts();
+    fetchAllColours();
   }, []);
 
   async function fetchAllContacts() {
@@ -56,6 +74,35 @@ function App() {
       setContacts((prev) => prev.filter((contact) => contact.id !== id));
     } catch (error) {
       console.error("Could not delete contact.");
+    }
+  }
+
+  // =======
+  async function fetchAllColours() {
+    try {
+      let response = await axios.get("/api/colours");
+      setColours(response.data);
+    } catch (error) {
+      console.error("Could not retrieve colours.");
+    }
+  }
+  async function addColour(event) {
+    event.preventDefault();
+    try {
+      const response = await axios.post("/api/colours", { name: newColour });
+      setColours((prev) => prev.concat(response.data));
+      setNewColour("");
+    } catch (error) {
+      console.error("Could not add colour");
+    }
+  }
+
+  async function deleteColour(id) {
+    try {
+      await axios.delete(`/api/colours/${id}`);
+      setColours((prev) => prev.filter((colour) => colour._id !== id));
+    } catch (error) {
+      console.error("Could not delete colour.");
     }
   }
 
@@ -92,6 +139,26 @@ function App() {
             <ContactsList contacts={contacts} deleteContact={deleteContact} />
           </ul>
         </div>
+      </div>
+      <div className="container">
+        <h3>Add Colour</h3>
+        <form onSubmit={addColour} className="contact-form">
+          <label>
+            Colour:
+            <input
+              onChange={(event) => setNewColour(event.target.value)}
+              value={newColour}
+              type="text"
+              name="colour"
+              required
+            />
+          </label>
+
+          <button type="submit">Save</button>
+        </form>
+        <ul className="contact-list">
+          <ColourList colours={colours} deleteColour={deleteColour} />
+        </ul>
       </div>
     </>
   );
